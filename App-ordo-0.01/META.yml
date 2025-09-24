@@ -1,0 +1,33 @@
+---
+abstract: 'A utility module for the ordo script'
+author:
+  - 'Nathaniel Graham <ngraham@cpan.org>'
+build_requires: {}
+configure_requires:
+  ExtUtils::MakeMaker: '0'
+  File::ShareDir::Install: '0.06'
+dynamic_config: 0
+generated_by: 'Dist::Zilla version 6.033, CPAN::Meta::Converter version 2.150010'
+license: perl
+meta-spec:
+  url: http://module-build.sourceforge.net/META-spec-v1.4.html
+  version: '1.4'
+name: App-ordo
+provides:
+  App::ordo:
+    file: lib/App/ordo.pm
+    version: '0.01'
+requires:
+  Exporter: '0'
+  File::ShareDir: '0'
+  File::Spec: '0'
+  JSON: '0'
+  perl: '5.008004'
+  strict: '0'
+  warnings: '0'
+resources:
+  homepage: https://metacpan.org/dist/App-ordo
+version: '0.01'
+x_generated_by_perl: v5.38.2
+x_serialization_backend: 'YAML::Tiny version 1.76'
+x_spdx_expression: 'Artistic-1.0-Perl OR GPL-1.0-or-later'

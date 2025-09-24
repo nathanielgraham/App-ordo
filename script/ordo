@@ -1,0 +1,19 @@
+#!/usr/bin/env perl
+use 5.008004;
+use strict;
+use warnings;
+use App::ordo qw(hello);
+use JSON qw(decode_json);
+use File::ShareDir qw(dist_file);
+use File::Spec;
+
+# Locate the config file in the distribution's share directory
+my $config_file = dist_file('App-ordo', 'ordo_config.json');
+open my $fh, '<', $config_file or die "Cannot open config file $config_file: $!";
+my $config_data = do { local $/; <$fh> };
+close $fh;
+my $config = decode_json($config_data);
+
+# Use the default name from the config
+my $name = $config->{token} // 'CPAN';  # Fallback to 'CPAN' if not set
+print hello($name);
