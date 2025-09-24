@@ -1,6 +1,5 @@
 {
   "api": "https://192.168.68.56/api",
-  "token": "19386c2e35b49864c594b562c7be07c2b43dbf5f",
   "aliases": {
     "cc": "change_cluster",
     "log": "read_log",
