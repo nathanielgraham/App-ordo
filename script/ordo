@@ -3,16 +3,15 @@ use strict;
 use warnings;
 use FindBin qw($Bin);
 use lib "$Bin/../lib";
-use App::ordo;
 
+# Internet check
 use IO::Socket::INET;
-
-# Fast internet check
 unless (IO::Socket::INET->new(PeerAddr=>'8.8.8.8', PeerPort=>53, Proto=>'tcp', Timeout=>4)) {
-    print "No internet connection — Ordo requires access to the internet.\n";
+    print "No internet connection — Ordo needs access to the server.\n";
     exit 1;
 }
 
-use App::ordo qw(one_shot_mode run_interactive_shell);
+use App::Ordo::Runner;
 
-@ARGV ? one_shot_mode(@ARGV) : run_interactive_shell();
+my $runner = App::Ordo::Runner->new;
+@ARGV ? $runner->run(@ARGV) : $runner->run_interactive;
