@@ -2,10 +2,9 @@ package App::Ordo::Command::Ls;
 use Moo;
 use feature qw(say);
 use utf8;
-use open ':std', ':utf8'; # Set STDOUT and STDERR to UTF-8
+use open ':std', ':utf8';
 
 extends 'App::Ordo::Command::Base';
-use Data::Dumper;
 
 use App::Ordo              qw($CURRENT_PATH epoch_to_tminus epoch_to_duration);
 use Term::ANSIColor        qw(colored);
@@ -14,13 +13,11 @@ use JSON::PP;
 
 sub name    { "ls" }
 sub summary { "List jobs and clusters in current path" }
-sub usage   { "[filter] [--wide|-l] [--deps] [--tree] [--json]" }
+sub usage   { "<path> [--wide|-l] [--deps] [--tree] [--json]" }
 
 sub option_spec {
    return {
       'wide|l' => 'Show all columns including %CPU/%MEM/NEEDS',
-      'deps|d' => 'Show dependency arrows (multi-line)',
-      'tree|t' => 'Show as dependency tree',
       'json|j' => 'Output as JSON',
    };
 }
@@ -31,9 +28,9 @@ has 'items' => (is => 'rw');
 has 'json' => (is => 'rw', default => sub { JSON::PP->new->ascii->pretty->allow_nonref } );
 
 sub execute {
-   my ( $self, $opt, @filter_words ) = @_;
+   my ( $self, $opt, $name ) = @_;
 
-   my $res = $self->api->call( 'find_cluster', {} );
+   my $res = $self->api->call( 'find_cluster', { name => $name } );
 
    unless ( $res->{success} && $res->{clusters} && @{ $res->{clusters} } ) {
       say colored( ["bold yellow"], "No items found in current path" );
@@ -51,26 +48,10 @@ sub execute {
 
    # Build hierarchy from current cluster
    my $base_path = $CURRENT_PATH;
-   #$self->_add_cluster_and_children( \@items, $current_cluster->{id}, \%cluster_by_id );
    $self->_add_cluster_and_children( $self->base_cluster_id );
 
-   # Apply filter
-   if (@filter_words) {
-      my $filter = lc join( ' ', @filter_words );
-      $self->items( [ grep {
-         my $name  = lc( $_->{full_path} || '' );
-         my $state = lc( $_->{jobstate}  || '' );
-         $name =~ /\Q$filter\E/ || $state eq $filter
-      } @{ $self->items } ] );
-   }
-
    if ( $opt->{json} ) {
-      print $self->json->encode($self->items);
-      return;
-   }
-
-   if ( $opt->{tree} ) {
-      $self->_print_tree( $self->items );
+      print $self->json->encode($res);
       return;
    }
 
@@ -81,24 +62,26 @@ sub _add_cluster_and_children {
    my ( $self, $cluster_id, $base_path ) = @_;
 
    my $cluster = $self->cluster_by_id->{$cluster_id} or return;
-   #if ($cluster_id == $self->base_cluster_id) {
-   my $cluster_path = $base_path ? "$base_path/$cluster->{name}" : $cluster->{name};
+
+   my $cluster_path = $cluster_id == $self->base_cluster_id ? '' 
+                    : $base_path ? "$base_path/$cluster->{name}" 
+                    : $cluster->{name};
    push @{ $self->items },
      {
       id          => $cluster->{id},
       full_path   => $cluster_path,
-      jobstate    => $cluster->{jobstate} || '—',
+      jobstate    => $cluster->{jobstate} || '-',
       server_name => '',
       pid         => '',
       last_start  => epoch_to_tminus( $cluster->{started} ),
       duration    => epoch_to_duration( $cluster->{started}, $cluster->{ended} ),
       next_start  => epoch_to_tminus( $cluster->{next_start} ),
-      cal_id      => $cluster->{cal_id},
+      cal_name    => $cluster->{cal_name},
       pctcpu      => '',
       pctmem      => '',
-      needs       => {},
+      needs       => $cluster->{needs} || {},
       is_cluster  => 1,
-     };
+     } unless $cluster_id == $self->base_cluster_id;
 
    # Jobs
    my @jobs = sort { $a->{id} <=> $b->{id} } @{ $cluster->{jobs} || [] };
@@ -106,14 +89,14 @@ sub _add_cluster_and_children {
       push @{ $self->items },
         {
          id          => $job->{id},
-         full_path   => "$cluster_path/$job->{name}",
-         jobstate    => $job->{jobstate}    || '—',
+         full_path   => $cluster_path ? "$cluster_path/$job->{name}" : $job->{name},
+         jobstate    => $job->{jobstate}    || '-',
          server_name => $job->{server_name} || '',
          pid         => $job->{pid} // '',
          last_start  => epoch_to_tminus( $job->{started} ),
          duration    => epoch_to_duration( $job->{started}, $job->{ended} ),
          next_start  => epoch_to_tminus( $job->{next_start} ),
-         cal_id      => '',
+         cal_name      => '',
          pctcpu      => $job->{pctcpu} // '',
          pctmem      => $job->{pctmem} // '',
          needs       => $job->{needs} || {},
@@ -130,35 +113,6 @@ sub _add_cluster_and_children {
    }
 }
 
-sub _print_tree {
-   my ( $self, $items ) = @_;
-   print colored( ["bold cyan"], "$CURRENT_PATH/\n" );
-
-   my %parents;
-   for my $item (@$items) {
-      next if $item->{is_cluster};
-      my @deps = keys %{ $item->{needs} || {} };
-      $parents{ $item->{id} } = \@deps if @deps;
-   }
-
-   for my $item (@$items) {
-      my $prefix = $item->{is_cluster} ? "" : ( $parents{ $item->{id} } ? "└── " : "├── " );
-      my $state_color =
-          $item->{jobstate} eq 'complete' ? 'green'
-        : $item->{jobstate} eq 'running'  ? 'magenta'
-        : $item->{jobstate} eq 'failed'   ? 'red'
-        :                                   'yellow';
-
-      print "$prefix" . colored( ["bold $state_color"], $item->{full_path} ) . colored( ["bright_black"], "  $item->{jobstate}  $item->{server_name}" );
-
-      if ( my $deps = $parents{ $item->{id} } ) {
-         my @sorted = sort @$deps;
-         print "    " . colored( ["bright_black"], "↑ " . join( "    ↑ ", @sorted ) );
-      }
-   }
-   print "";
-}
-
 sub _print_table {
    my ( $self, $items, $opt ) = @_;
 
@@ -167,21 +121,32 @@ sub _print_table {
 
    my @rows = ( \@headers );
 
+   unshift @$items, {
+      id => $self->base_cluster_id,
+      full_path => $self->cluster_by_id->{$self->base_cluster_id}->{name},
+      jobstate => $self->cluster_by_id->{$self->base_cluster_id}->{jobstate},
+      is_cluster => 1.
+   };
+
    for my $item (@$items) {
       my @deps = sort keys %{ $item->{needs} || {} };
 
       my $state_color =
-          $item->{jobstate} eq 'complete' ? 'green'
+          $item->{jobstate} =~ /^(complete|ice|prunded)/ ? 'green'
         : $item->{jobstate} eq 'immutable' ? 'cyan'
         : $item->{jobstate} eq 'running'  ? 'magenta'
-        : $item->{jobstate} eq 'failed'   ? 'red'
-        : $item->{jobstate} eq 'waiting'  ? 'yellow'
+        : $item->{jobstate} =~ /^(failed|hold|zombie)/ ? 'red'
+        : $item->{jobstate} =~ /^(ready|waiting|looping|retrying)$/ ? 'yellow'
         :                                   'white';
 
-      my $path_display =
+      my $path_display =  
         $item->{is_cluster}
         ? colored( ["bold blue"], $item->{full_path} . '/')
         : $item->{full_path};
+
+      unless ($self->base_cluster_id == $item->{id} && $item->{is_cluster}) {
+         $path_display = '  ' . $path_display;
+      }
 
       my @row = (
          $item->{id}, $path_display,
@@ -191,7 +156,7 @@ sub _print_table {
          $item->{last_start} || '',
          $item->{duration}   || '',
          $item->{next_start} || '',
-         $item->{cal_id} ? "ID $item->{cal_id}" : '',
+         $item->{cal_name} ? $item->{cal_name} : '',
       );
 
       push @row, ( $item->{pctcpu} // '', $item->{pctmem} // '', @deps ? join( ",", @deps ) : '', ) if $opt->{wide};

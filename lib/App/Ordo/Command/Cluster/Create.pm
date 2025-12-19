@@ -12,7 +12,8 @@ sub usage   { "<path> [options]" }
 
 sub option_spec {
     return {
-        'desc|description|d=s'  => 'Cluster description',
+        #'desc|description|d=s'  => 'Cluster description',
+        'desc'                  => 'Cluster description',
         'needs=s@'              => 'Clusters this depends on (AND logic)',
         'needs_any=s@'          => 'Clusters this depends on (OR logic)',
         'cal=s'                 => 'Attach calendar by name',
@@ -30,6 +31,23 @@ sub execute {
         return;
     }
 
+    if ($opt->{needs}) {
+        my @expanded;
+        for my $item (@{$opt->{needs}}) {
+            push @expanded, split /,/, $item;
+        }
+        $opt->{needs} = \@expanded;
+    }
+
+    if ($opt->{needs_any}) {
+        my @expanded;
+        for my $item (@{$opt->{needs_any}}) {
+            push @expanded, split /,/, $item;
+        }
+        $opt->{needs_any} = \@expanded;
+    }
+
+    use Data::Dumper;
     my $payload = {
         name        => $path,
         description => $opt->{desc},
@@ -40,6 +58,7 @@ sub execute {
         clonable    => $opt->{clonable},
         on_fail     => $opt->{on_fail},
     };
+    print Dumper($payload);
 
     my $res = $self->api->call('create_cluster', $payload);
 

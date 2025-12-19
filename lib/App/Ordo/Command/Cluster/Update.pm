@@ -15,6 +15,7 @@ sub option_spec {
         'description=s'         => 'Change description',
         'needs=s@'              => 'Replace AND dependencies',
         'needs_any=s@'          => 'Replace OR dependencies',
+        'remove_needs'          => 'Remove all dependencies (boolean)',
         'cal=s'                 => 'Attach/detach calendar (name or empty)',
         'loops=i'               => 'Change loop count',
         'clonable=i'            => 'Change clonable flag',
@@ -32,10 +33,27 @@ sub execute {
 
     my $payload = { name => $path };
 
+    if ($opt->{needs}) {
+        my @expanded;
+        for my $item (@{$opt->{needs}}) {
+            push @expanded, split /,/, $item;
+        }
+        $opt->{needs} = \@expanded;
+    }
+
+    if ($opt->{needs_any}) {
+        my @expanded;
+        for my $item (@{$opt->{needs_any}}) {
+            push @expanded, split /,/, $item;
+        }
+        $opt->{needs_any} = \@expanded;
+    }
+
     # Only include provided options
     $payload->{description} = $opt->{description} if $opt->{description};
     $payload->{needs}       = $opt->{needs}       if $opt->{needs};
     $payload->{needs_any}   = $opt->{needs_any}   if $opt->{needs_any};
+    $payload->{remove_needs} = $opt->{remove_needs} if $opt->{remove_needs};
     $payload->{cal}         = $opt->{cal}         if exists $opt->{cal};
     $payload->{loops}       = $opt->{loops}       if defined $opt->{loops};
     $payload->{clonable}    = $opt->{clonable}    if defined $opt->{clonable};

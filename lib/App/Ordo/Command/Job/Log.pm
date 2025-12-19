@@ -6,7 +6,7 @@ extends 'App::Ordo::Command::Base';
 use Term::ANSIColor qw(colored);
 
 sub name    { "job log" }
-sub summary { "Show job output — latest run if no ID given" }
+sub summary { "Show job output - latest run if no ID given" }
 sub usage   { "<path/name> [log-id]" }
 
 sub option_spec { {} }

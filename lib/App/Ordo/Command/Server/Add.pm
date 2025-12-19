@@ -49,8 +49,6 @@ sub execute {
 
     if ($res->{success}) {
         say colored(["bold green"], "Server '$name' ($opt->{host}) added successfully");
-        say "ID: " . ($res->{id} || 'unknown');
-        say colored(["bold yellow"], "Tip: use key-based auth for production!");
     } else {
         say colored(["bold red"], "Failed to add server: " . ($res->{message} || 'unknown error'));
     }

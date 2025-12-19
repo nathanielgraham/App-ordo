@@ -3,6 +3,7 @@ package App::Ordo::Command::Job::Hold;
 use feature qw(say);
 use Moo;
 extends 'App::Ordo::Command::Base';
+use Term::ANSIColor qw(colored);
 
 sub name    { "job hold" }
 sub summary { "Pause a job from running" }

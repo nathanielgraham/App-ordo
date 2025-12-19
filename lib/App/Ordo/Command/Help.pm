@@ -7,7 +7,6 @@ extends 'App::Ordo::Command::Base';
 
 use Term::ANSIColor qw(colored);
 
-# This is required attribute is passed from Runner.pm
 has 'commands' => (is => 'ro', required => 0);
 
 sub name    { "help" }
@@ -47,8 +46,7 @@ sub _help_topic {
 sub _help_overview {
     my ($self) = @_;
 
-    say colored(["bold white"], "Ordo - hierarchical real-time job scheduler");
-    say colored(["bold cyan"],   "\nUsage:");
+    say colored(["bold cyan"],   "Usage:");
     say "  ordo                                 # interactive shell";
     say "  ordo <command> [args]                # one-shot mode\n";
 

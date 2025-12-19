@@ -1,7 +1,12 @@
 package App::Ordo::Command::Server::List;
 use Moo;
 use feature qw(say);
+use utf8;
+use open ':std', ':utf8';
+
+use Term::ANSIColor qw(colored);
 use Text::Table::Tiny 1.02 qw(generate_table);
+
 
 extends 'App::Ordo::Command::Base';
 
@@ -15,7 +20,11 @@ sub option_spec { {} }
 sub execute {
     my ($self) = @_;
     my $res = $self->api->call('find_monitor', {});
-    return unless $res->{success} && $res->{servers};
+
+    unless ($res->{success} && $res->{servers}) {
+       say colored(["bold yellow"], "No servers found");
+       return;
+    }
 
     my $rows = [ [qw(ID NAME HOST USER CPU MEM DISK PING UPDATED)] ];
     for my $s (@{$res->{servers} || []}) {
@@ -31,7 +40,6 @@ sub execute {
             $s->{update_time} ? time - $s->{update_time} . 's ago' : '-',
         ];
     }
-
     say generate_table(rows => $rows, header_row => 1, style => 'boxrule');
 }
 

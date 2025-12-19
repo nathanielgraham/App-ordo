@@ -36,12 +36,15 @@ sub execute {
     }
 
     my $name = $cal->{name} || colored(["yellow"], "(unnamed id:$cal->{id})");
-    my $desc = $cal->{description} ? " — $cal->{description}" : "";
+    my $tz = $cal->{tz} ? "$cal->{tz}" : "";
+    my $desc = $cal->{description} ? " - $cal->{description}" : "";
     my $attached = $cal->{cluster_ids} && @{$cal->{cluster_ids}}
-        ? " (attached to " . join(", ", @{$cal->{cluster_ids}}) . ")"
-        : " (not attached)";
+        ? join(", ", @{$cal->{cluster_ids}})
+        : "(not attached)";
 
-    say colored(["bold cyan"], "Calendar: $name$desc$attached\n");
+    say colored(["bold cyan"], "Calendar: $name$desc");
+    say colored(["bold cyan"], "TimeZone: $tz");
+    say colored(["bold cyan"], "Attached: $attached\n");
 
     my $crons = $cal->{crons} || [];
     if (@$crons) {

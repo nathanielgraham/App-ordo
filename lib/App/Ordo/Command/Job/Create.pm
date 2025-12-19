@@ -14,14 +14,14 @@ sub option_spec {
     return {
         'server=s'           => 'Server to run on (required)',
         'script=s'           => 'Shell command/script (required)',
-        'description=s'      => 'Job description',
+        'desc=s'             => 'Job description',
         'needs=s@'           => 'Jobs this depends on (AND logic)',
         'needs_any=s@'       => 'Jobs this depends on (OR logic)',
         'retrys=i'           => 'Number of retries',
         'loops=i'            => 'Number of loops',
         'delay=i'            => 'Delay between loops',
         'clonable=i'         => 'Allow cloning',
-        'on_fail=i'          => 'Raise alarm on failure',
+        'on_fail=i'          => 'Cluster to run on failure',
         'json=s'             => 'Extra JSON data',
     };
 }
@@ -33,6 +33,22 @@ sub execute {
         say colored(["bold red"], "Missing required: name, --server, --script");
         $self->show_help;
         return;
+    }
+
+    if ($opt->{needs}) {
+        my @expanded;
+        for my $item (@{$opt->{needs}}) {
+            push @expanded, split /,/, $item;
+        }
+        $opt->{needs} = \@expanded;
+    }
+
+    if ($opt->{needs_any}) {
+        my @expanded;
+        for my $item (@{$opt->{needs_any}}) {
+            push @expanded, split /,/, $item;
+        }
+        $opt->{needs_any} = \@expanded;
     }
 
     my $payload = {

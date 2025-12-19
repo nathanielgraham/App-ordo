@@ -2,6 +2,7 @@ package App::Ordo::Command::Cluster::Hold;
 use feature qw(say);
 use Moo;
 extends 'App::Ordo::Command::Base';
+use Term::ANSIColor        qw(colored);
 
 sub name    { "cluster hold" }
 sub summary { "Prevent cluster from running" }

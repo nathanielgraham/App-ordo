@@ -6,7 +6,7 @@ extends 'App::Ordo::Command::Base';
 use Term::ANSIColor qw(colored);
 
 sub name    { "cluster ice" }
-sub summary { "Freeze a cluster — skip it without blocking dependents" }
+sub summary { "Skip cluster without blocking dependents" }
 sub usage   { "<path/name>" }
 
 sub option_spec { {} }
@@ -22,8 +22,8 @@ sub execute {
     my $res = $self->api->call('ice_cluster', { name => $name });
 
     if ($res->{success}) {
-        say colored(["bold cyan"], "Cluster '$name' iced — will be skipped");
-        say colored(["bright_dark"], "Downstream clusters will run as soon as upstream complete");
+        say colored(["bold cyan"], "Cluster '$name' iced - will be skipped");
+        say colored(["bright_black"], "Downstream clusters will run as soon as upstream complete");
     } else {
         say colored(["bold red"], "Failed to ice cluster: " . ($res->{message} || 'error'));
     }

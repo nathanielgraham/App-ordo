@@ -21,9 +21,6 @@ sub execute {
         return;
     }
 
-    #my $full_path = $name =~ m|^/| ? $name : "$CURRENT_PATH/$name";
-    #$full_path =~ s|//+|/|g;
-
     my $res = $self->api->call('read_job', { name => $name });
 
     unless ($res->{success}) {
@@ -48,9 +45,12 @@ sub execute {
     say colored(["cyan"], "Description: ") . ($j->{description} || colored(["green"], "(none)"));
 
     if ($j->{needs} && keys %{$j->{needs}}) {
-        say colored(["cyan"], "Depends on: ") . join(", ", keys %{$j->{needs}});
+        my @all = grep { $j->{needs}{$_}{mode} == 0 } keys %{$j->{needs}}; 
+        my @any = grep { $j->{needs}{$_}{mode} == 1 } keys %{$j->{needs}}; 
+        say colored(["cyan"], "Depends on: ") . join(", ", @all) if scalar @all;
+        say colored(["cyan"], "Depends on any: ") . join(", ", @any) if scalar @any;
     } else {
-        say colored(["cyan"], "Dependencies: ") . colored(["green"], "none");
+        say colored(["cyan"], "Dependencies: ") . colored(["green"], "(none)");
     }
 
     say colored(["cyan"], "Created: ") . ($j->{creation_time}

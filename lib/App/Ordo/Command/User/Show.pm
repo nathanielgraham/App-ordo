@@ -18,9 +18,6 @@ sub execute {
     # Get user info
     my $user_res = $self->api->call('read_user', {});
 
-    say colored(["bold white"], "Ordo Client v1.0");
-    say colored(["bold cyan"],   "Connected to: ") . $self->api->config->{api} . "\n";
-
     if ($user_res->{success}) {
         say colored(["bold cyan"], "Current User\n");
 
@@ -36,7 +33,7 @@ sub execute {
             ["Remote Address", $user_res->{remote_address} // '-'],
         ];
 
-        say generate_table(rows => $rows, header_row => 1);
+        say generate_table(rows => $rows, header_row => 1, style => 'boxrule');
     } else {
         say colored(["bold red"], "Failed to retrieve user info");
         say $user_res->{message} if $user_res->{message};

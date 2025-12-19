@@ -25,16 +25,13 @@ sub execute {
         return;
     }
 
-    my $full_path = $name =~ m|^/| ? $name : "$CURRENT_PATH/$name";
-    $full_path =~ s|//+|/|g;
-
-    my $payload = { name => $full_path };
+    my $payload = { name => $name };
     $payload->{force} = 1 if $opt->{force};
 
     my $res = $self->api->call('delete_job', $payload);
 
     if ($res->{success}) {
-        say colored(["bold green"], "Job '$full_path' deleted");
+        say colored(["bold green"], "Job '$name' deleted");
     } else {
         my $msg = $res->{message} || 'unknown error';
         say colored(["bold red"], "Failed to delete job: $msg");

@@ -22,7 +22,7 @@ sub execute {
     my $res = $self->api->call('melt_job', { name => $name });
 
     if ($res->{success}) {
-        say colored(["bold green"], "Job '$name' melted — back in rotation");
+        say colored(["bold green"], "Job '$name' melted");
     } else {
         say colored(["bold red"], "Failed to melt job: " . ($res->{message} || 'error'));
     }

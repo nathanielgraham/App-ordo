@@ -12,7 +12,6 @@ sub aliases { ['server rm'] }
 
 sub option_spec {
     return {
-        'force|f' => 'Force delete even if jobs are running on it',
     };
 }
 

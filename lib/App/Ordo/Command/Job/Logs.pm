@@ -51,7 +51,7 @@ sub execute {
         ];
     }
 
-    say generate_table(rows => $rows, header_row => 1);
+    say generate_table(rows => $rows, header_row => 1, style => 'boxrule');
     say "\nUse 'job log <name> <id>' to view a specific run";
 }
 

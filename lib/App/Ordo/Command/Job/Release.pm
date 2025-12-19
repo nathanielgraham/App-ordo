@@ -1,6 +1,8 @@
 package App::Ordo::Command::Job::Release;
 use Moo;
 extends 'App::Ordo::Command::Base';
+use feature qw(say);
+use Term::ANSIColor qw(colored);
 
 sub name    { "job release" }
 sub summary { "Release a held job" }
