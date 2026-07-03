@@ -1,0 +1,14 @@
+dist.ini
+lib/App/ordo.pm
+LICENSE
+Makefile
+Makefile.PL
+MANIFEST
+MANIFEST.SKIP
+META.json
+META.yml
+MYMETA.json
+MYMETA.yml
+README
+script/ordo
+share/ordo_config.json
