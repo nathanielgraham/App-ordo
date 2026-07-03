@@ -75,7 +75,6 @@ For low-level WebSocket debugging and scripting, see `wsshell.pl` in the GitHub 
 ## Links
 
 - Project: [ordoscheduler.com](https://ordoscheduler.com) (coming soon)
-- GitHub: https://github.com/nathanielgraham/ordo
 - CPAN: https://metacpan.org/dist/App-Ordo
 
 ## License
