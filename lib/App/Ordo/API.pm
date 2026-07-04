@@ -41,9 +41,8 @@ sub call {
     my ($self, $command, $params) = @_;
     $params->{command} = $command;
     $params->{token} //= $self->config->{token};
-
     my $tx = $self->ua->post($self->config->{api} => json => $params);
-    my $res = $tx->res->json // { success => 0, message => $tx->res->message || 'Unknown' };
+    my $res = $tx->res->json // { success => 0, message => $tx->res->message || 'Unknown error' };
     return $res;
 }
 

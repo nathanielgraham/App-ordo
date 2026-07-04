@@ -6,8 +6,8 @@ use open ':std', ':utf8';
 
 extends 'App::Ordo::Command::Base';
 
-use App::Ordo              qw($CURRENT_PATH epoch_to_tminus epoch_to_duration);
-use Term::ANSIColor        qw(colored);
+use App::Ordo qw($CURRENT_PATH epoch_to_tminus epoch_to_duration);
+use Term::ANSIColor qw(colored);
 use Text::Table::Tiny 1.02 qw(generate_table);
 use JSON::PP;
 
@@ -37,7 +37,6 @@ sub execute {
       return;
    }
 
-   # Show local time
    my $now = scalar localtime;
    say colored( ["bright_black"], "Local time is $now" ) unless $opt->{json};
 
@@ -46,7 +45,6 @@ sub execute {
 
    $self->cluster_by_id( { map { $_->{id} => $_ } @{ $res->{clusters} } } );
 
-   # Build hierarchy from current cluster
    my $base_path = $CURRENT_PATH;
    $self->_add_cluster_and_children( $self->base_cluster_id );
 
@@ -66,6 +64,7 @@ sub _add_cluster_and_children {
    my $cluster_path = $cluster_id == $self->base_cluster_id ? '' 
                     : $base_path ? "$base_path/$cluster->{name}" 
                     : $cluster->{name};
+
    push @{ $self->items },
      {
       id          => $cluster->{id},
@@ -83,7 +82,6 @@ sub _add_cluster_and_children {
       is_cluster  => 1,
      } unless $cluster_id == $self->base_cluster_id;
 
-   # Jobs
    my @jobs = sort { $a->{id} <=> $b->{id} } @{ $cluster->{jobs} || [] };
    for my $job (@jobs) {
       push @{ $self->items },
@@ -96,7 +94,7 @@ sub _add_cluster_and_children {
          last_start  => epoch_to_tminus( $job->{started} ),
          duration    => epoch_to_duration( $job->{started}, $job->{ended} ),
          next_start  => epoch_to_tminus( $job->{next_start} ),
-         cal_name      => '',
+         cal_name    => '',
          pctcpu      => $job->{pctcpu} // '',
          pctmem      => $job->{pctmem} // '',
          needs       => $job->{needs} || {},
@@ -104,7 +102,6 @@ sub _add_cluster_and_children {
         };
    }
 
-   # Sub-clusters
    my @children = grep { $_->{parent_id} && $_->{parent_id} == $cluster_id } values %{ $self->cluster_by_id };
    @children = sort { $a->{id} <=> $b->{id} } @children;
 
@@ -121,27 +118,28 @@ sub _print_table {
 
    my @rows = ( \@headers );
 
+   # Add base cluster row
    unshift @$items, {
       id => $self->base_cluster_id,
       full_path => $self->cluster_by_id->{$self->base_cluster_id}->{name},
-      jobstate => $self->cluster_by_id->{$self->base_cluster_id}->{jobstate},
-      is_cluster => 1.
+      jobstate => $self->cluster_by_id->{$self->base_cluster_id}->{jobstate} || '-',
+      is_cluster => 1,
    };
 
    for my $item (@$items) {
       my @deps = sort keys %{ $item->{needs} || {} };
 
       my $state_color =
-          $item->{jobstate} =~ /^(complete|ice|prunded)/ ? 'green'
+          $item->{jobstate} =~ /^(complete|ice|pruned)/ ? 'green'
         : $item->{jobstate} eq 'immutable' ? 'cyan'
         : $item->{jobstate} eq 'running'  ? 'magenta'
         : $item->{jobstate} =~ /^(failed|hold|zombie)/ ? 'red'
         : $item->{jobstate} =~ /^(ready|waiting|looping|retrying)$/ ? 'yellow'
-        :                                   'white';
+        : 'white';
 
       my $path_display =  
         $item->{is_cluster}
-        ? colored( ["bold blue"], $item->{full_path} . '/')
+        ? colored( ["bold blue"], $item->{full_path} . '/' )
         : $item->{full_path};
 
       unless ($self->base_cluster_id == $item->{id} && $item->{is_cluster}) {
@@ -149,25 +147,20 @@ sub _print_table {
       }
 
       my @row = (
-         $item->{id}, $path_display,
+         $item->{id},
+         $path_display,
          colored( ["bold $state_color"], $item->{jobstate} ),
          $item->{server_name} || '',
          $item->{pid} // '',
-         $item->{last_start} || '',
-         $item->{duration}   || '',
-         $item->{next_start} || '',
-         $item->{cal_name} ? $item->{cal_name} : '',
+         $item->{last_start}  || '',
+         $item->{duration}    || '',
+         $item->{next_start}  || '',
+         $item->{cal_name}    || '',
       );
 
-      push @row, ( $item->{pctcpu} // '', $item->{pctmem} // '', @deps ? join( ",", @deps ) : '', ) if $opt->{wide};
+      push @row, ( $item->{pctcpu} // '', $item->{pctmem} // '', @deps ? join(",", @deps) : '' ) if $opt->{wide};
 
-      if ( $opt->{deps} && @deps ) {
-         push @rows, \@row;
-         push @rows, [ ('') x 9, "← $_" ] for @deps;
-      }
-      else {
-         push @rows, \@row;
-      }
+      push @rows, \@row;
    }
 
    say generate_table(

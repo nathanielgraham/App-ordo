@@ -131,14 +131,12 @@ sub extract_command {
 # Time formatting helpers
 # ------------------------------------------------------------------
 sub epoch_to_tminus {
-    my $epoch = shift;
-    return '' unless $epoch && $epoch =~ /^\d+$/;
-    my $current_epoch = time;
-    my $diff = $current_epoch - $epoch;
-    return $diff < 60 ? "${diff}s ago"
-         : $diff < 3600 ? int($diff/60) . "m ago"
-         : $diff < 86400 ? int($diff/3600) . "h ago"
-         : int($diff/86400) . "d ago";
+   my $epoch = shift;
+   return '' unless $epoch && $epoch =~ /^\d+$/;
+   my $current_epoch = time;
+   my $sign = $epoch > $current_epoch ? '-' : '+';
+   my $duration = epoch_to_duration( $current_epoch, $epoch );
+   return "T$sign$duration";
 }
 
 sub epoch_to_duration {
